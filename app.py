@@ -1,15 +1,13 @@
 from flask import Flask, render_template
 import requests
 import json
-# from sqlalchemy import create_engine, inspect
-# import pandas as pd
+import joblib
 
 # flask app setup
 app = Flask(__name__)
 
 @app.route("/")
 def index():
-    
     return render_template("index.html")
 
 @app.route("/about")
@@ -27,7 +25,6 @@ def raw():
 
     return raw_data
 
-
 # Route to the clean data
 @app.route("/about/api/data")
 def data():
@@ -35,13 +32,15 @@ def data():
         cleaned_data = json.load(json_file)
     return cleaned_data
 
-
-
 @app.route("/results")
 def results():
     return render_template("results.html")
 
-
+@app.route("/api/predict/<country>/<num_periods>")
+def prediction(country,num_periods): 
+    model = joblib.load(f"models/{country}.sav")
+    forecast = model.forecast(steps=int(num_periods)).tolist()
+    return {"prediction": forecast}
 
 if __name__ == "__main__":
     app.run(debug=True)
