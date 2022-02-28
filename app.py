@@ -1,6 +1,7 @@
-from flask import Flask, render_template, jsonify
-from sqlalchemy import create_engine, inspect
-import pandas as pd
+from flask import Flask, render_template
+import requests
+import json
+import joblib
 
 # flask app setup
 app = Flask(__name__)
@@ -9,60 +10,41 @@ app = Flask(__name__)
 def index():
     return render_template("index.html")
 
-@app.route("/trends")
-def trends():
-
-    return render_template("trends.html")
-
-@app.route("/maps")
-def maps():
-    return render_template("maps.html")    
-
-@app.route("/api")
-def api():
-    # database setup
-    engine = create_engine("sqlite:///Data/sa_crime_new.sqlite")
-    conn = engine.connect()
-    data = pd.read_sql("SELECT * FROM main_df", conn)
-    json_data = data.to_json(orient='records')
-    
-    return render_template("api.html", json_data=json_data)
+@app.route("/about")
+def about():
+    return render_template("about.html")
 
 
-@app.route("/api/lev1")
-def api_lev1():
-    engine = create_engine("sqlite:///Data/sa_crime_new.sqlite")
-    conn = engine.connect()
-    data = pd.read_sql("SELECT offence1, count FROM main_df", conn)
-    return data.groupby(["offence1"]).sum()["count"].reset_index().to_json(orient="records")
+@app.route("/about/api/raw")
+def raw():
+    url_HDRO = "http://ec2-54-174-131-205.compute-1.amazonaws.com/API/HDRO_API.php/indicator_id=137906,136906,137006/year=1990,1995,2000,2005,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021"
+    response_HDRO = requests.get(url_HDRO)
+    # print(f"HDRO: {response_HDRO}")
 
-@app.route("/api/lev2")
-def api_lev2():
-    engine = create_engine("sqlite:///Data/sa_crime_new.sqlite")
-    conn = engine.connect()
-    data = pd.read_sql("SELECT offence2, count FROM main_df", conn)
-    return data.groupby(["offence2"]).sum()["count"].reset_index().to_json(orient="records")
+    raw_data = response_HDRO.json()
 
-@app.route("/api/lev3")
-def api_lev3():
-    engine = create_engine("sqlite:///Data/sa_crime_new.sqlite")
-    conn = engine.connect()
-    data = pd.read_sql("SELECT offence3, count FROM main_df", conn)
-    return data.groupby(["offence3"]).sum()["count"].reset_index().to_json(orient="records")
+    return raw_data
 
-@app.route("/api/lev2/<offence_type>")
-def api_lev2_filter(offence_type):
-    engine = create_engine("sqlite:///Data/sa_crime_new.sqlite")
-    conn = engine.connect()
-    data = pd.read_sql("SELECT offence2, count FROM main_df", conn)
-    return data[data["offence2"]==offence_type].groupby(["offence2"]).sum()["count"].reset_index().to_json(orient="records")
+# Route to the clean data
+@app.route("/about/api/data")
+def data():
+    with open('./Data/data_final.json') as json_file:
+        cleaned_data = json.load(json_file)
+    return cleaned_data
 
-@app.route("/api/map")
-def map():
-    engine = create_engine("sqlite:///Data/sa_crime_new.sqlite")
-    conn = engine.connect()
-    data = pd.read_sql("SELECT locality, count, lat, long FROM main_df", conn)
-    return data.groupby(["locality","lat","long"]).sum()["count"].reset_index().to_json(orient="records")
+
+@app.route("/api/predict/<country>/<num_periods>")
+def prediction(country,num_periods): 
+    model = joblib.load(f"models/{country}.sav")
+    forecast = model.forecast(steps=int(num_periods)).tolist()
+    return {"prediction": forecast}
+
+
+@app.route("/results")
+def results():
+    return render_template("results.html")
+
+
 
 if __name__ == "__main__":
     app.run(debug=True)
