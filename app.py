@@ -2,6 +2,7 @@ from flask import Flask, render_template
 import requests
 import json
 import joblib
+import pandas as pd
 
 # flask app setup
 app = Flask(__name__)
@@ -38,9 +39,17 @@ def results():
 
 @app.route("/api/predict/<country>/<num_periods>")
 def prediction(country,num_periods): 
-    model = joblib.load(f"models/{country}.sav")
+    print(country, num_periods)
+    model = joblib.load(f"Data/models/{country}.sav")
     forecast = model.forecast(steps=int(num_periods)).tolist()
     return {"prediction": forecast}
+
+@app.route("/api/cleaned/<country>")
+def cleaned_country(country):
+    df = pd.read_json("./Data/data_final.json")
+    df_country = df[df["Country"]==country]
+    json_country = df_country.to_json()
+    return json_country
 
 if __name__ == "__main__":
     app.run(debug=True)
