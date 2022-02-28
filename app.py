@@ -32,6 +32,17 @@ def data():
         cleaned_data = json.load(json_file)
     return cleaned_data
 
+<<<<<<< HEAD
+=======
+
+@app.route("/api/predict/<country>/<num_periods>")
+def prediction(country,num_periods): 
+    model = joblib.load(f"models/{country}.sav")
+    forecast = model.forecast(steps=int(num_periods)).tolist()
+    return {"prediction": forecast}
+
+
+>>>>>>> ec00448a1c2c0eef2857754e3be6d84a53fdeb5e
 @app.route("/results")
 def results():
     return render_template("results.html")
