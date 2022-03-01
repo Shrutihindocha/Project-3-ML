@@ -11,31 +11,30 @@ d3.select("#submit").on("click", ()=>{
             data.prediction.forEach(prediction => {
                 html += `<li>${prediction}</li>`
             })
+            console.log(Object.values(cleaned_data.GDI));
 
-            console.log(Object.values(cleaned_data.Year))
-            console.log(Object.values(cleaned_data.GDI))
-            console.log([2020, 2021, 2022 ])
-            // console.log(Object.values(cleaned_data.Year))
-            // console.log(Math.max(Object.values(cleaned_data.Year)))
+            StartYear = 2020;
+            var predictedLayerXData = [];
+            for (let i = 0; i < num_periods; i++) {
+                predictedLayerXData.push(StartYear+i)
+            };
+            // console.log(predictedLayerXData)
+            var predictedLayerYData = data.prediction;
+            var trainLayerXData = Object.values(cleaned_data.Year);
+            var trainLayerYData = Object.values(cleaned_data.GDI);
 
-
-            var nPredictions = data.prediction.length
-
-            
-            var predictedLayer = [
+            var predictedLayer =
                 {
-                    y: data.prediction,
-                    x: [2020, 2021, 2022 ],
+                    x: predictedLayerXData,
+                    y: predictedLayerYData,
                     mode: 'lines'
                 }
-            ];
-            var trainLayer = [
-                {
-                    x: [Object.values(cleaned_data.Year)],
-                    y: [Object.values(cleaned_data.GDI)],
+            ;
+            var trainLayer ={
+                    x: trainLayerXData,
+                    y: trainLayerYData,
                     mode: 'lines'
-                }
-            ];
+                };
             var layout = {
                             title: `GDI Forecast`,
                             yaxis: {
@@ -46,6 +45,7 @@ d3.select("#submit").on("click", ()=>{
                             }
                         };
             var plotData = [predictedLayer, trainLayer];
+            
             Plotly.newPlot('timeSeries', plotData, layout);
             
             d3.select("#output").html(html)
